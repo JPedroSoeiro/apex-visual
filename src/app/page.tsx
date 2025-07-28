@@ -1,9 +1,9 @@
-import HeroWithCanvasReveal from "@/components/hero-with-canvas-reveal";
+import HeroWithCanvasReveal from "@/app/components/hero-with-canvas-reveal";
 
 export default function Home() {
   return (
     <div>
-      <main>
+      <main className="w-full h-screen">
         <HeroWithCanvasReveal />
       </main>
     </div>

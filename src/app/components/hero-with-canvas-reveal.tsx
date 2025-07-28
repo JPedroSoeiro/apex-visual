@@ -1,5 +1,5 @@
 "use client";
-import { CanvasRevealEffect } from "@/components/ui/canvas-reveal-effect";
+import { CanvasRevealEffect } from "@/app/components/ui/canvas-reveal-effect";
 import CarViewer from "../components/CarViewer";
 
 export default function HeroWithCanvasReveal() {
@@ -11,9 +11,9 @@ export default function HeroWithCanvasReveal() {
           animationSpeed={2}
           containerClassName="bg-black"
           colors={[
-            [0, 180, 0], // Brighter green
-            [0, 220, 0], // Even brighter green
-            [100, 255, 100], // Light green
+            [0, 0, 180], // Azul escuro
+            [0, 0, 220], // Outro tom de azul escuro
+            [100, 100, 255], // Azul claro
           ]}
           dotSize={3}
           opacities={[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1]}
@@ -23,8 +23,8 @@ export default function HeroWithCanvasReveal() {
       </div>
 
       {/* Hero Content */}
-      <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-        <CarViewer modelPath="/models/md-902/scene.gltf" />
+      <div className="w-full h-screen items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
+        <CarViewer modelPath="/models/skyline/scene.gltf" />
       </div>
     </div>
   );
