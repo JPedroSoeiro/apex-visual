@@ -1,0 +1,11 @@
+Model Information:
+* title:	Toyota supra
+* source:	https://sketchfab.com/3d-models/toyota-supra-8c3298645cf34f5f87b6e60139d73cbe
+* author:	tk animations (https://sketchfab.com/tharun_kumar_d)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Toyota supra" (https://sketchfab.com/3d-models/toyota-supra-8c3298645cf34f5f87b6e60139d73cbe) by tk animations (https://sketchfab.com/tharun_kumar_d) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
