@@ -1,6 +1,6 @@
 "use client";
 import { CanvasRevealEffect } from "@/components/ui/canvas-reveal-effect";
-import { Button } from "@/components/ui/button";
+import CarViewer from "../components/CarViewer";
 
 export default function HeroWithCanvasReveal() {
   return (

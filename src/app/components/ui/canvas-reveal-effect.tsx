@@ -33,11 +33,11 @@ export const CanvasRevealEffect = ({
             opacities ?? [0.3, 0.3, 0.3, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 1]
           }
           shader={`
-              float animation_speed_factor = ${animationSpeed.toFixed(1)};
-              float intro_offset = distance(u_resolution / 2.0 / u_total_size, st2) * 0.01 + (random(st2) * 0.15);
-              opacity *= step(intro_offset, u_time * animation_speed_factor);
-              opacity *= clamp((1.0 - step(intro_offset + 0.1, u_time * animation_speed_factor)) * 1.25, 1.0, 1.25);
-            `}
+            float animation_speed_factor = ${animationSpeed.toFixed(1)};
+            float intro_offset = distance(u_resolution / 2.0 / u_total_size, st2) * 0.01 + (random(st2) * 0.15);
+            opacity *= step(intro_offset, u_time * animation_speed_factor);
+            opacity *= clamp((1.0 - step(intro_offset + 0.1, u_time * animation_speed_factor)) * 1.25, 1.0, 1.25);
+          `}
           center={["x", "y"]}
         />
       </div>
@@ -177,22 +177,23 @@ const DotMatrix: React.FC<DotMatrixProps> = ({
 
 type Uniforms = {
   [key: string]: {
-    value: number[] | number[][] | number;
+    value: number[] | number[][] | number | THREE.Vector3 | THREE.Vector2; // Adicionado THREE.Vector3 e THREE.Vector2
     type: string;
   };
 };
+
 const ShaderMaterial = ({
   source,
   uniforms,
   maxFps = 60,
 }: {
   source: string;
-  hovered?: boolean;
+  hovered?: boolean; // 'hovered' foi definido como opcional, mas não usado. Pode ser removido se não for necessário.
   maxFps?: number;
   uniforms: Uniforms;
 }) => {
   const { size } = useThree();
-  const ref = useRef<THREE.Mesh>();
+  const ref = useRef<THREE.Mesh>(null!); // <--- CORREÇÃO AQUI: Adicionado (null!) para o useRef
   let lastFrameTime = 0;
 
   useFrame(({ clock }) => {
@@ -250,6 +251,7 @@ const ShaderMaterial = ({
     preparedUniforms["u_time"] = { value: 0, type: "1f" };
     preparedUniforms["u_resolution"] = {
       value: new THREE.Vector2(size.width * 2, size.height * 2),
+      type: "2f", // Adicionado o tipo aqui para consistência
     }; // Initialize u_resolution
     return preparedUniforms;
   };
@@ -279,7 +281,7 @@ const ShaderMaterial = ({
     });
 
     return materialObject;
-  }, [size.width, size.height, source]);
+  }, [size.width, size.height, source]); // Dependências do useMemo
 
   return (
     <mesh ref={ref as any}>
@@ -289,13 +291,6 @@ const ShaderMaterial = ({
   );
 };
 
-const Shader: React.FC<ShaderProps> = ({ source, uniforms, maxFps = 60 }) => {
-  return (
-    <Canvas className="absolute inset-0  h-full w-full">
-      <ShaderMaterial source={source} uniforms={uniforms} maxFps={maxFps} />
-    </Canvas>
-  );
-};
 interface ShaderProps {
   source: string;
   uniforms: {
@@ -306,3 +301,11 @@ interface ShaderProps {
   };
   maxFps?: number;
 }
+
+const Shader: React.FC<ShaderProps> = ({ source, uniforms, maxFps = 60 }) => {
+  return (
+    <Canvas className="absolute inset-0  h-full w-full">
+      <ShaderMaterial source={source} uniforms={uniforms} maxFps={maxFps} />
+    </Canvas>
+  );
+};
