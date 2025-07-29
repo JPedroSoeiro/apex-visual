@@ -4,10 +4,18 @@
 import React from "react";
 import CarViewer from "./CarViewer";
 
-export default function LeftColumn() {
+interface LeftColumnProps {
+  modelPath: string;
+  showWireframe: boolean;
+}
+
+export default function LeftColumn({
+  modelPath,
+  showWireframe,
+}: LeftColumnProps) {
   return (
     <div className="w-full md:w-1/2 h-full flex items-center justify-center">
-      <CarViewer modelPath="/models/impala/scene.gltf" showWireframe={true} />
+      <CarViewer modelPath={modelPath} showWireframe={showWireframe} />
     </div>
   );
 }
