@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense, useRef, useState, useEffect, useMemo } from "react";
-import { Canvas, useLoader, useFrame } from "@react-three/fiber"; // Adicionado useFrame
+import { Canvas, useLoader, useFrame } from "@react-three/fiber";
 import {
   OrbitControls,
   Environment,
@@ -15,9 +15,16 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 
 interface CarModelProps {
   modelPath: string;
+  showWireframe?: boolean; // Nova prop para controlar o wireframe
 }
 
-function Model({ modelPath }: { modelPath: string }) {
+function Model({
+  modelPath,
+  showWireframe = false,
+}: {
+  modelPath: string;
+  showWireframe?: boolean;
+}) {
   const dracoLoader = useMemo(() => {
     const loader = new DRACOLoader();
     loader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/"); // Ou '/draco/' se local
@@ -43,13 +50,33 @@ function Model({ modelPath }: { modelPath: string }) {
       const center = box.getCenter(new THREE.Vector3());
       modelRef.current.position.sub(center);
       modelRef.current.scale.set(0.01, 0.01, 0.01);
-    }
-  }, [gltf.scene]);
 
-  // <--- CORREÇÃO AQUI: Adicionado useFrame para rotação automática
+      // <--- AQUI ESTÁ A LÓGICA PARA APLICAR O WIREframe --->
+      gltf.scene.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          if (showWireframe) {
+            // Cria um material básico para o wireframe
+            child.material = new THREE.MeshBasicMaterial({
+              color: 0xffffff, // Branco para as linhas
+              wireframe: true, // Habilita o modo wireframe
+              transparent: true, // Pode ser transparente para melhor visualização
+              opacity: 0.2, // Leve opacidade
+            });
+          } else {
+            // Se não for wireframe, tenta restaurar o material original
+            // Isso é um pouco mais complexo, idealmente você guardaria os materiais originais
+            // Para simplicidade, se showWireframe for false, ele usará o material padrão do GLTF
+            // O useLoader já carrega com os materiais, então aqui é só para o caso 'wireframe: false'
+            // Se o modelo tem materiais diferentes, você precisaria de uma lógica mais sofisticada aqui.
+            // Por agora, se showWireframe for false, não faremos nada e ele manterá o material original do GLTF.
+          }
+        }
+      });
+    }
+  }, [gltf.scene, showWireframe]); // Adicionado showWireframe como dependência para reagir à mudança
+
   useFrame(() => {
     if (modelRef.current) {
-      // Rotaciona o modelo no eixo Y (vertical). Ajuste o '0.005' para controlar a velocidade.
       modelRef.current.rotation.y += 0.005;
     }
   });
@@ -71,9 +98,13 @@ function FitToView({ children }: { children: React.ReactNode }) {
 
 interface CarViewerProps {
   modelPath: string;
+  showWireframe?: boolean; // Passa a prop para o componente Model
 }
 
-const CarViewer: React.FC<CarViewerProps> = ({ modelPath }) => {
+const CarViewer: React.FC<CarViewerProps> = ({
+  modelPath,
+  showWireframe = false,
+}) => {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
@@ -95,18 +126,30 @@ const CarViewer: React.FC<CarViewerProps> = ({ modelPath }) => {
       setLoadingError(null);
     };
 
-    const onErrorCallback = (url: string) => {
-      console.error(`Erro ao carregar recurso global: ${url}`);
-      let errorMessage = `Falha ao carregar modelo 3D: ${url}`;
-      setLoadingError(
-        errorMessage +
-          "\nVerifique o console do navegador para mais detalhes específicos."
-      );
-    };
-
     THREE.DefaultLoadingManager.onProgress = onProgressCallback;
     THREE.DefaultLoadingManager.onLoad = onLoadCallback;
-    THREE.DefaultLoadingManager.onError = onErrorCallback;
+    THREE.DefaultLoadingManager.onError = (url: string, error?: unknown) => {
+      console.error(`Erro ao carregar recurso global: ${url}`, error);
+
+      let errorMessage = `Falha ao carregar modelo 3D ou ambiente: ${url}`;
+      if (error instanceof Error) {
+        if (
+          error.message.includes("429") ||
+          error.message.includes("Failed to fetch")
+        ) {
+          errorMessage +=
+            "\nMotivo: Limite de requisições excedido no CDN do ambiente (429 Too Many Requests?).";
+        } else {
+          errorMessage += `\nDetalhe: ${error.message}`;
+        }
+      } else if (typeof error === "string") {
+        errorMessage += `\nDetalhe: ${error}`;
+      } else {
+        errorMessage +=
+          "\nDetalhe: Erro desconhecido. Verifique o console do navegador.";
+      }
+      setLoadingError(errorMessage);
+    };
 
     return () => {
       THREE.DefaultLoadingManager.onProgress = () => {};
@@ -123,19 +166,21 @@ const CarViewer: React.FC<CarViewerProps> = ({ modelPath }) => {
           height: "600px",
           background: "transparent",
           display: "flex",
+          flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
+          color: "red",
+          fontSize: "1.2em",
+          textAlign: "center",
+          padding: "20px",
         }}
       >
-        <Html
-          center
-          className="error-message"
-          style={{ color: "red", fontSize: "1.2em" }}
-        >
-          {loadingError}
-          <br />
-          Verifique o console do navegador (F12) para detalhes.
-        </Html>
+        {loadingError}
+        <br />
+        <small style={{ fontSize: "0.8em", color: "#888" }}>
+          Tente recarregar a página ou remova o &lt;Environment /&gt;
+          temporariamente se o problema persistir.
+        </small>
       </div>
     );
   }
@@ -165,7 +210,8 @@ const CarViewer: React.FC<CarViewerProps> = ({ modelPath }) => {
         >
           <Bounds fit clip observe>
             <FitToView>
-              <Model modelPath={modelPath} />
+              {/* Passando a prop showWireframe para o componente Model */}
+              <Model modelPath={modelPath} showWireframe={showWireframe} />
             </FitToView>
           </Bounds>
 
@@ -179,14 +225,9 @@ const CarViewer: React.FC<CarViewerProps> = ({ modelPath }) => {
             castShadow
           />
 
-          {/* OrbitControls: makeDefault é importante se você tem mais de um controle */}
-          {/* Se quiser rotação manual E automática, o makeDefault pode ser problemático.
-              Se quiser SÓ automática, certifique-se de que nenhum outro controle está ativo.
-              Com a rotação automática, o OrbitControls pode lutar com ela.
-              Para rotação automática pura, você pode remover o OrbitControls. */}
           <OrbitControls makeDefault enableZoom enablePan enableRotate />
 
-          <Environment preset="city" />
+          {/* <Environment preset="studio" /> */}
         </Suspense>
       </Canvas>
     </div>
